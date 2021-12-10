@@ -34,6 +34,18 @@ void MatrixAdd(float *M1, float *M2, float *Mout, int n, int p){
     };
 
 }
+void MatrixMult(float *M1, float *M2, float *Mout, int n){
+    
+    printf("Multiplication from the CPU...\n\n");
+    
+    for (int lig = 0; lig < n; lig++){
+        for (int col = 0; col < n; col++){
+            float s = 0.0f;
+            for (int i = 0; i < n; i++) {
+                s += M1[lig * n + i] * M2[i * n + col];
+            }
+            Mout[lig * n + col] = s;
+        }
 // fonction appellée par un thread ils "connaissent" donc leurs ids 
 __global__ void cudaMatrixAdd(float *M1, float *M2, float *Mout, int n, int p){
 
@@ -42,6 +54,21 @@ __global__ void cudaMatrixAdd(float *M1, float *M2, float *Mout, int n, int p){
             Mout[tid] = M1[tid] + M2[tid];
         }
 
+}
+__global__ void cudaMatrixMult(float *M1, float *M2, float *Mout, int n){
+    printf("Multiplication from the GPU...\n\n");
+    
+    int lig = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    float s = 0.0f;
+    
+    if(lig < n && col < n){
+        for (int i = 0; i < n; i++){
+            s += M1[lig * n + i] * M2[i * n + col];
+        }
+    }
+    Mout[lig * n + col] = s;
 }
 int main(){
     float *M, *M2;
